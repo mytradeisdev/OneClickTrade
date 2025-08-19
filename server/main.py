@@ -38,10 +38,12 @@ if not firebase_admin._apps:
         # Fallback to GOOGLE_APPLICATION_CREDENTIALS if set by the platform
         firebase_admin.initialize_app()
 
-app = FastAPI()
+app = FastAPI(title="UnoClick Backend")
+
+# add this right after:
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "UnoClick backend is live 🚀"}
+    return {"status": "ok", "service": "UnoClick", "routes": ["/admin", "/portfolio", "/logs", "/notify/test", "/notify/alert", "/approve", "/docs"]}
 
 def log_event(ev: dict):
     try:
