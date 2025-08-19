@@ -1,0 +1,16 @@
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+
+# Node/Frontend
+node_modules/
+
+# Secrets
+server/firebase-service-account.json
+.env
