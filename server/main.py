@@ -38,7 +38,7 @@ if not firebase_admin._apps:
         # Fallback to GOOGLE_APPLICATION_CREDENTIALS if set by the platform
         firebase_admin.initialize_app()
 
-
+app = FastAPI()
 @app.get("/")
 def root():
     return {"status": "ok", "message": "UnoClick backend is live 🚀"}
