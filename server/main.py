@@ -11,6 +11,8 @@ from jwt import PyJWTError
 from kiteconnect import KiteConnect
 import firebase_admin
 from firebase_admin import credentials, messaging
+import base64
+
 
 
 
@@ -35,14 +37,32 @@ LOG_FILE = os.getenv('LOG_FILE', 'server/logs.jsonl')
 
 # Firebase Admin (service account via GOOGLE_APPLICATION_CREDENTIALS)
 # Firebase Admin (service account JSON loaded from env)
+def _load_service_account_dict():
+    raw = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
+    if not raw:
+        raise RuntimeError("FIREBASE_SERVICE_ACCOUNT_JSON is not set")
+    try:
+        # Try plain JSON first
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        # Try base64-encoded JSON (safer to store in Render)
+        try:
+            decoded = base64.b64decode(raw).decode("utf-8")
+            return json.loads(decoded)
+        except Exception as e:
+            raise RuntimeError(f"Failed to parse service account JSON: {e}")
+
 if not firebase_admin._apps:
-    firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
-    if firebase_json:
-        cred = credentials.Certificate(json.loads(firebase_json))
-        firebase_admin.initialize_app(cred)
-    else:
-        # Fallback to GOOGLE_APPLICATION_CREDENTIALS if set by the platform
-        firebase_admin.initialize_app()
+    sa = _load_service_account_dict()
+    proj = sa.get("project_id")
+    if not proj:
+        raise RuntimeError("Service account JSON missing project_id")
+    cred = credentials.Certificate(sa)
+    # Explicitly pass projectId to be safe
+    firebase_admin.initialize_app(cred, {"projectId": proj})
+    # Optional: write a log line so you can confirm in Render logs
+    print(f"[Firebase] Initialized for project_id={proj}")
+
 
 app = FastAPI(title="UnoClick Backend")
 
