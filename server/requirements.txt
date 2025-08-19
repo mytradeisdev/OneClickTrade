@@ -1,0 +1,6 @@
+
+fastapi>=0.111
+uvicorn[standard]>=0.30
+pyjwt>=2.8
+kiteconnect>=4.2
+firebase-admin>=6.5

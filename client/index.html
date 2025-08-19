@@ -1,0 +1,42 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UnoClick — Trade Approvals</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0ea5e9"/>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:2rem;background:#0b1220;color:#e6f0ff}
+    .card{max-width:720px;margin:0 auto;background:#111827;border-radius:16px;padding:1.25rem;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+    h1{font-size:1.3rem;margin:0 0 .75rem}
+    label{display:block;margin:.75rem 0 .25rem;color:#a7b3d1}
+    input,textarea,button{width:100%;padding:.8rem;border-radius:10px;border:1px solid #223048;background:#0f172a;color:#e6f0ff}
+    button{background:#0ea5e9;border:0;font-weight:700;margin-top:.75rem}
+    .row{display:grid;gap:.75rem;grid-template-columns:1fr 1fr}
+    .muted{color:#9aa8c7;font-size:.9rem}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🤖₹ UnoClick — Mobile Trade Notifications</h1>
+    <p class="muted">Install to Home Screen in Chrome → Allow notifications → you’ll get trade ideas with Approve / No.</p>
+
+    <div id="status" class="muted">…initializing…</div>
+
+    <label>FCM Registration Token</label>
+    <textarea id="token" rows="3" readonly></textarea>
+
+    <div class="row">
+      <button id="copy">Copy Token</button>
+      <button id="test">Send Test Push</button>
+    </div>
+
+    <label>Server URL</label>
+    <input id="server" placeholder="https://your-unoclick-server.example"/>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+
+{
+  "name": "UnoClick — Trade Approvals",
+  "short_name": "UnoClick",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    { "src": "/icons/unoclick_icon_64x64.png", "sizes": "64x64", "type": "image/png" }
+  ]
+}
