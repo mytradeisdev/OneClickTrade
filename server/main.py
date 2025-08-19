@@ -155,6 +155,16 @@ def place_sequence_and_gtt(legs: List[OrderLeg]):
         results.append({"leg": l.dict(), "gtt_id": gid, "stop": stop_trig, "target": target_trig})
     return results
 # --- add this route after app init ---
+
+
+@app.get("/kite/login")
+def kite_login():
+    # quick redirect to Zerodha login for your API key
+    return RedirectResponse(
+        url=f"https://kite.trade/connect/login?v=3&api_key={KITE_API_KEY}"
+    )
+
+
 @app.get("/kite/callback")
 def kite_callback(request: Request):
     """
