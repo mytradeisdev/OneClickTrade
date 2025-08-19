@@ -4,12 +4,18 @@ import os, time, json, hashlib
 from typing import List, Optional
 from fastapi import FastAPI, Request, HTTPException, Form
 from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import jwt
 from jwt import PyJWTError
 from kiteconnect import KiteConnect
 import firebase_admin
 from firebase_admin import credentials, messaging
+
+
+
+
+
 
 # --- Config via env ---
 JWT_SECRET = os.getenv('JWT_SECRET', 'change_me')
@@ -148,6 +154,40 @@ def place_sequence_and_gtt(legs: List[OrderLeg]):
                              trigger_values=[stop_trig, target_trig], last_price=float(ltp), orders=orders)
         results.append({"leg": l.dict(), "gtt_id": gid, "stop": stop_trig, "target": target_trig})
     return results
+# --- add this route after app init ---
+@app.get("/kite/callback")
+def kite_callback(request: Request):
+    """
+    Zerodha redirects here with ?status=success&request_token=xxxx
+    We exchange it for an access_token and store it.
+    """
+    params = dict(request.query_params)
+    if params.get("status") != "success" or "request_token" not in params:
+        raise HTTPException(400, f"Bad callback: {params}")
+
+    request_token = params["request_token"]
+    kite = KiteConnect(api_key=KITE_API_KEY)
+    try:
+        session = kite.generate_session(request_token, api_secret=KITE_API_SECRET)
+        access_token = session["access_token"]
+    except Exception as e:
+        raise HTTPException(500, f"Token exchange failed: {e}")
+
+    # Persist it in memory/env (and logs)
+    global KITE_ACCESS_TOKEN
+    KITE_ACCESS_TOKEN = access_token
+    os.environ["KITE_ACCESS_TOKEN"] = access_token
+    log_event({"ts": time.time(), "evt": "kite_access_token_set"})
+
+    # optional: quick test call (profile) to confirm it works
+    kite.set_access_token(access_token)
+    try:
+        _ = kite.profile()
+    except Exception as e:
+        log_event({"ts": time.time(), "evt": "kite_profile_check_fail", "err": str(e)})
+
+    # Redirect to a simple success page (or /admin)
+    return RedirectResponse(url="/admin")
 
 @app.post('/notify/test')
 async def notify_test(b: TestBody):
