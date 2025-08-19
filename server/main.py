@@ -9,7 +9,7 @@ import jwt
 from jwt import PyJWTError
 from kiteconnect import KiteConnect
 import firebase_admin
-from firebase_admin import messaging
+from firebase_admin import credentials, messaging
 
 # --- Config via env ---
 JWT_SECRET = os.getenv('JWT_SECRET', 'change_me')
@@ -28,8 +28,16 @@ PORTFOLIO_FILE = os.getenv('PORTFOLIO_FILE', 'server/portfolio.json')
 LOG_FILE = os.getenv('LOG_FILE', 'server/logs.jsonl')
 
 # Firebase Admin (service account via GOOGLE_APPLICATION_CREDENTIALS)
+# Firebase Admin (service account JSON loaded from env)
 if not firebase_admin._apps:
-    firebase_admin.initialize_app()
+    firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+    if firebase_json:
+        cred = credentials.Certificate(json.loads(firebase_json))
+        firebase_admin.initialize_app(cred)
+    else:
+        # Fallback to GOOGLE_APPLICATION_CREDENTIALS if set by the platform
+        firebase_admin.initialize_app()
+
 
 app = FastAPI(title="UnoClick Backend")
 
