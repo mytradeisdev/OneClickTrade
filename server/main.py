@@ -39,7 +39,9 @@ if not firebase_admin._apps:
         firebase_admin.initialize_app()
 
 
-app = FastAPI(title="UnoClick Backend")
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "UnoClick backend is live 🚀"}
 
 def log_event(ev: dict):
     try:
