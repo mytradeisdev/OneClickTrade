@@ -218,7 +218,55 @@ def kite_callback(request: Request):
 
     # Redirect to a simple success page (or /admin)
     return RedirectResponse(url="/admin")
+@app.post("/kite/postback")
+async def kite_postback(request: Request):
+    raw = await request.body()
+    sig = request.headers.get("X-Kite-Signature", "")
+    if not KITE_API_SECRET:
+        raise HTTPException(500, "KITE_API_SECRET missing in environment")
+    if not verify_kite_signature(raw, sig, KITE_API_SECRET):
+        raise HTTPException(401, "Invalid postback signature")
 
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(400, f"Invalid JSON: {e}")
+
+    # Kite postback commonly includes these fields (keys may vary)
+    order_id   = data.get("order_id") or data.get("order_id_str") or "NA"
+    status     = data.get("status") or data.get("order_status") or "NA"
+    tradingsym = data.get("tradingsymbol") or data.get("instrument_token") or "NA"
+    qty        = data.get("quantity") or data.get("filled_quantity") or data.get("pending_quantity") or 0
+    price      = data.get("average_price") or data.get("price") or 0
+    ts         = data.get("exchange_timestamp") or data.get("order_timestamp") or ""
+
+    # Build a concise notification
+    title = f"Order {status}: {tradingsym}"
+    body  = f"Qty {qty} @ {price} | {order_id}"
+
+    # Push to all registered device tokens
+    tokens = load_devices()
+    sent, failed = 0, 0
+    for t in tokens:
+        try:
+            note = messaging.Notification(title=title, body=body)
+            msg = messaging.Message(notification=note, token=t, data={
+                "order_id": str(order_id),
+                "status": str(status),
+                "symbol": str(tradingsym),
+                "qty": str(qty),
+                "price": str(price),
+                "ts": str(ts),
+            })
+            messaging.send(msg)
+            sent += 1
+        except Exception as e:
+            failed += 1
+            log_event({"ts": time.time(), "evt": "postback_push_fail", "token": t, "error": str(e)})
+
+    log_event({"ts": time.time(), "evt": "kite_postback", "status": status, "symbol": tradingsym,
+               "qty": qty, "price": price, "sent": sent, "failed": failed, "raw": data})
+    return {"ok": True, "sent": sent, "failed": failed}
 @app.post('/notify/test')
 async def notify_test(b: TestBody):
     note = messaging.Notification(title='UnoClick Test', body='If you see this, push works!')
